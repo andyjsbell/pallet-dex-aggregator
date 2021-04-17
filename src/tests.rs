@@ -6,7 +6,7 @@ use frame_support::{assert_ok, assert_noop};
 #[test]
 fn estimation_on_next_session() {
     new_test_ext().execute_with(|| {
-        assert_ok!(true);
+        assert!(true);
     });
 }
 
