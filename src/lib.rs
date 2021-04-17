@@ -1,26 +1,35 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::unused_unit)]
 
+mod mock;
+mod tests;
+pub use pallet::*;
+
+use sp_std::prelude::*;
 use frame_support::{pallet_prelude::*};
 use sp_runtime::{
     traits::{Zero},
 };
 
-mod mock;
-mod tests;
-
-pub use module::*;
-
 #[frame_support::pallet]
-pub mod module {
+pub mod pallet {
     use super::*;
-    use frame_system::pallet_prelude::OriginFor;
+    use frame_system::pallet_prelude::*;
+
+    #[pallet::pallet]
+    #[pallet::generate_store(pub (super) trait Store)]
+    pub struct Pallet<T>(_);
 
     #[pallet::config]
     pub trait Config: frame_system::Config {
+        type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
     }
 
-    /// Error for non-fungible-token module.
+    #[pallet::event]
+    #[pallet::generate_deposit(pub (super) fn deposit_event)]
+    pub enum Event<T: Config> {
+        SomethingHappened(),
+    }
+
     #[pallet::error]
     pub enum Error<T> {
         None,
@@ -45,9 +54,6 @@ pub mod module {
         }
     }
 
-    #[pallet::pallet]
-    pub struct Pallet<T>(PhantomData<T>);
-
     #[pallet::hooks]
     impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
@@ -58,8 +64,4 @@ pub mod module {
             Ok(().into())
         }
     }
-}
-
-impl<T: Config> Pallet<T> {
-
 }
