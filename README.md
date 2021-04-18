@@ -20,7 +20,7 @@ In order to find the best path a path finder algorithm would be used which would
 
 We would have one extrinsic for the user:
 
-`fn swap(origin, toToken, fromToken, amount, options)`
+`fn swap(origin, from_token, to_token, amount, options)`
 
 This would schedule the trade for the next block and store this in an ordered list of `Swap` structure.
 
