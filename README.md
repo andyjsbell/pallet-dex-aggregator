@@ -75,3 +75,8 @@ trait DEX<T: Config> {
 }
 
 ```
+
+On accepting a swap request the pallet would send the `SwapAccepted(from_token, to_token, amount)` event.  If the swap,
+when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount)` and if it fails due to
+parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)`
+
