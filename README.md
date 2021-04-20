@@ -16,7 +16,7 @@ More information can be found here https://github.com/1inch/1inchProtocol/blob/m
 
 ## Design
 
-In order to find the best path a path finder algorithm would be used which would run in an ofchain worker(OCW) as the algorithm would be non-deterministic.
+In order to find the best path a path finder algorithm would be used which would run in an offchain worker(OCW) as the algorithm would be non-deterministic.
 
 We would have one extrinsic for the user:
 
@@ -38,30 +38,30 @@ On the next block the OCW would be called and this would run through the swaps t
 The path finder trait would be defined as follows:
 
 ```
-struct Options {
+struct Params {
     slippage: f32,
-    option1: bool,
+    other: bool, // TBD
 }
 
 trait Config  {
     type CurrencyId;
-    type Amount;
+    type Balance;
 }
 
-type Dex<T> = Option<Vec<Box<dyn DEX<T>>>>;
+type Dex<T> = Vec<Box<dyn DEX<T>>>;
 trait PathFinder<T: Config> {
     fn find_path(
         from_token: T::CurrencyId, 
         to_token: T::CurrencyId, 
-        amount: T::Amount, 
+        amount: T::Balance, 
         dex: Dex<T>,
-        options: Options,
+        params: Params,
     );
 }
 
-type Pool<C,A> = Option<Vec<(C, A, C, A)>>;
+type Pool<C,A> = Vec<(C, A, C, A)>;
 trait DEX<T: Config> {
-    fn pools(&self) -> Pool<T::CurrencyId, T::Amount>;
+    fn pools(&self) -> Pool<T::CurrencyId, T::Balance>;
 }
 
 ```
@@ -73,10 +73,8 @@ type Pool<C,A> = Option<Vec<(C, A, C, A)>>;
 trait DEX<T: Config> {
     fn pools(&self) -> Pool<T::CurrencyId, T::Amount>;
 }
-
 ```
 
 On accepting a swap request the pallet would send the `SwapAccepted(from_token, to_token, amount)` event.  If the swap,
-when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount)` and if it fails due to
+when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount, target_amount)` and if it fails due to
 parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)`
-
