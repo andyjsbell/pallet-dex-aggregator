@@ -69,9 +69,11 @@ trait DEX<T: Config> {
 and for a DEX:
 
 ```
-type Pool<C,A> = Option<Vec<(C, A, C, A)>>;
+type TradingPair<C> = (C, C);
+type TradingPairs<C> = Vec<TradingPair<C>>;
 trait DEX<T: Config> {
-    fn pools(&self) -> Pool<T::CurrencyId, T::Amount>;
+    fn trading_pairs(&self) -> Option<TradingPairs<T::CurrrencyId>>;
+    fn liquidity(&self, pair: TradingPair<T::CurrencyId>) -> Option<(T::Balance, T::Balance)>;
 }
 ```
 
