@@ -38,8 +38,9 @@ On the next block the OCW would be called and this would run through the swaps t
 The path finder trait would be defined as follows:
 
 ```
+type Fix = FixedU128<U4>;
 struct Params {
-    slippage: f32,
+    slippage: Fix,
     other: bool, // TBD
 }
 
@@ -48,20 +49,15 @@ trait Config  {
     type Balance;
 }
 
-type Dex<T> = Vec<Box<dyn DEX<T>>>;
+type Dex<T> = Box<dyn DEX<T>>;
 trait PathFinder<T: Config> {
     fn find_path(
         from_token: T::CurrencyId, 
         to_token: T::CurrencyId, 
         amount: T::Balance, 
-        dex: Dex<T>,
+        dex: Vec<Dex<T>>,       
         params: Params,
     );
-}
-
-type Pool<C,A> = Vec<(C, A, C, A)>;
-trait DEX<T: Config> {
-    fn pools(&self) -> Pool<T::CurrencyId, T::Balance>;
 }
 
 ```
@@ -80,3 +76,11 @@ trait DEX<T: Config> {
 On accepting a swap request the pallet would send the `SwapAccepted(from_token, to_token, amount)` event.  If the swap,
 when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount, target_amount)` and if it fails due to
 parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)`
+
+The amount to be swapped would be transferred to the pallet and held by the pallet until either the swap is executed or
+if the swap fails. For a successful swap the target token would be transferred to the swap caller.  For a failure the 
+original swap token would be returned to the caller.  In order to protect against spam and to incentivise nodes a commission
+would be charged at 0.3% of the original token for a successful swap or 0.03% for a swap that failed.
+
+Alternatively the swap could be paid with a token native to the blockchain instead of a commission of the original token.
+
