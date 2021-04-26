@@ -47,6 +47,7 @@ struct Params {
 trait Config  {
     type CurrencyId;
     type Balance;
+    type Costs;
 }
 
 type Dex<T> = Box<dyn DEX<T>>;
@@ -68,8 +69,14 @@ and for a DEX:
 type TradingPair<C> = (C, C);
 type TradingPairs<C> = Vec<TradingPair<C>>;
 trait DEX<T: Config> {
+    /// Get a list of support trading pairs from the DEX
     fn trading_pairs(&self) -> Option<TradingPairs<T::CurrrencyId>>;
-    fn liquidity(&self, pair: TradingPair<T::CurrencyId>) -> Option<(T::Balance, T::Balance)>;
+    /// Get a quote from the DEX, returning target amount and cost of operation
+    fn get_quote(
+        from_token: T::CurrencyId, 
+        to_token: T::CurrencyId, 
+        amount: T::Balance
+    ) -> (T::Balance, T::Costs);
 }
 ```
 
