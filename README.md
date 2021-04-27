@@ -80,9 +80,18 @@ trait DEX<T: Config> {
 }
 ```
 
-On accepting a swap request the pallet would send the `SwapAccepted(from_token, to_token, amount)` event.  If the swap,
-when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount, target_amount)` and if it fails due to
-parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)`
+Without encrypting the mempool and extrinsic calls front-running is a danger so we have to be prevent exposing the 
+intended trade until we wish to execute the trade.  
+
+A quote would be provided for a swap via an RPC call on the node in which the swap path would be stored in memory in
+the same node and a "quote reference" to this resulting path would be returned.  The quote could then be executed by 
+submitting a signed transaction with the "quote reference" and funds.  This would schedule the quote to be ran in the OCW.  
+The OCW then on the next block will call up the "quote reference" via RPC and the resulting path returned from RPC would
+execute the swap by calling the `swap` extrinsic.
+
+If the swap is executed correctly then the event `SwapExecuted(from_token, to_token, amount, target_amount)` would be 
+emitted and if it fails due to parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)` would
+be emitted.
 
 The amount to be swapped would be transferred to the pallet and held by the pallet until either the swap is executed or
 if the swap fails. For a successful swap the target token would be transferred to the swap caller.  For a failure the 
