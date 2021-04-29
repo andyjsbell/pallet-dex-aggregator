@@ -47,6 +47,7 @@ struct Params {
 trait Config  {
     type CurrencyId;
     type Balance;
+    /// An approximation of costs in terms of commision and also any downstream costs
     type Costs;
 }
 
@@ -81,22 +82,19 @@ trait DEX<T: Config> {
 ```
 
 Without encrypting the mempool and extrinsic calls front-running is a danger so we have to be prevent exposing the 
-intended trade until we wish to execute the trade.  
+intended trade until we wish to execute the trade.
 
-A quote would be provided for a swap via an RPC call on the node in which the swap path would be stored in memory in
-the same node and a "quote reference" to this resulting path would be returned.  The quote could then be executed by 
-submitting a signed transaction with the "quote reference" and funds.  This would schedule the quote to be ran in the OCW.  
-The OCW then on the next block will call up the "quote reference" via RPC and the resulting path returned from RPC would
-execute the swap by calling the `swap` extrinsic.
+A proposed strategy would be:
+- User sends an RPC request of their desired swap and the node runs the pathfinder algorithm returning the best path 
+in less than 5 seconds.  
+- The path is cached at the node for later retrieval. The path details plus a `quote_identifier` for this operation are returned to the caller.
+- The user decides to execute the swap and calls the `swap` extrinsic with the `quote_identifier` and the source funds.
+- The `quote_identifier` is pushed to pallet storage for execution in the next block.
+- On the next block the OCW will process the `quote_identifier` by retrieving the path from the RPC search in the first step
+- The OCW will call the `swap` extrinsic with the path details for execution
+- On successful execution of the swap the callers account would be credited minus commission at X% rate
+- On failure due to slippage or other constraints on the trade then the funds would be returned to the caller minus commission at X% rate
+- On error any funds transferred by the caller would be sent back.
 
-If the swap is executed correctly then the event `SwapExecuted(from_token, to_token, amount, target_amount)` would be 
-emitted and if it fails due to parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)` would
-be emitted.
-
-The amount to be swapped would be transferred to the pallet and held by the pallet until either the swap is executed or
-if the swap fails. For a successful swap the target token would be transferred to the swap caller.  For a failure the 
-original swap token would be returned to the caller.  In order to protect against spam and to incentivise nodes a commission
-would be charged at 0.3% of the original token for a successful swap or 0.03% for a swap that failed.
-
+The commission is in place to protect against spam and to incentivise nodes running the network.
 Alternatively the swap could be paid with a token native to the blockchain instead of a commission of the original token.
-
