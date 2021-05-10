@@ -13,6 +13,8 @@ use sp_runtime::{
     },
 };
 use frame_support::{parameter_types, construct_runtime,};
+use crate::traits::*;
+use sp_std::hash::Hash;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -56,12 +58,61 @@ impl frame_system::Config for Test {
     type SS58Prefix = ();
 }
 
-parameter_types! {
-	pub const DisabledValidatorsThreshold: Perbill = Perbill::from_percent(33);
+pub struct DEXs<T: Config> {
+    _marker: PhantomData<T>,
+}
+
+type CurrencyId = u64;
+const TOKEN_1: CurrencyId = 1;
+const TOKEN_2: CurrencyId = 2;
+const TOKEN_3: CurrencyId = 3;
+const TOKEN_4: CurrencyId = 4;
+const TOKEN_5: CurrencyId = 5;
+
+struct DEX_A;
+impl<T:Config> Dex<T> for DEX_A {
+    fn get_quote(
+        &self,
+        from: &T::CurrencyId,
+        to: &T::CurrencyId,
+        amount: T::Balance) -> T::Balance {
+        amount
+    }
+
+    fn trading_pairs(&self) -> Vec<(T::CurrencyId, T::CurrencyId)> {
+        vec![(TOKEN_1, TOKEN_2), (TOKEN_1, TOKEN_3)]
+    }
+
+}
+
+struct DEX_B;
+
+impl<T:Config> Dex<T> for DEX_B {
+    fn get_quote(
+        &self,
+        from: &T::CurrencyId,
+        to: &T::CurrencyId,
+        amount: T::Balance) -> T::Balance {
+        amount
+    }
+
+    fn trading_pairs(&self) -> Vec<(T::CurrencyId, T::CurrencyId)> {
+        vec![(TOKEN_1, TOKEN_2), (TOKEN_1, TOKEN_4)]
+    }
+}
+
+// Mock a set of DEXs for us to run the `PathFinder` with
+impl<T: Config> SetOfDex<T> for DEXs<T> {
+    fn get() -> DexList<T> {
+        vec![Box::new(DEX_A{}), Box::new(DEX_B{})]
+    }
 }
 
 impl Config for Test {
     type Event = Event;
+    type DEXs = DEXs<Self>;
+    type CurrencyId = CurrencyId;
+    type Balance = u64;
 }
 
 pub(crate) fn new_test_ext() -> sp_io::TestExternalities {

@@ -9,5 +9,3 @@ fn estimation_on_next_session() {
         assert!(true);
     });
 }
-
-

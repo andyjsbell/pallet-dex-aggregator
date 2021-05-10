@@ -2,8 +2,10 @@
 
 mod mock;
 mod tests;
-pub use pallet::*;
+mod traits;
 
+pub use pallet::*;
+use sp_runtime::FixedU128;
 use sp_std::prelude::*;
 use frame_support::{pallet_prelude::*};
 use sp_runtime::{
@@ -14,6 +16,9 @@ use sp_runtime::{
 pub mod pallet {
     use super::*;
     use frame_system::pallet_prelude::*;
+    use crate::traits::*;
+    use crate::mock::DEXs;
+    use sp_runtime::traits::AtLeast32BitUnsigned;
 
     #[pallet::pallet]
     #[pallet::generate_store(pub (super) trait Store)]
@@ -22,17 +27,20 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+        type DEXs: SetOfDex<Self>;
+        type CurrencyId: AtLeast32BitUnsigned + Clone;
+        type Balance: AtLeast32BitUnsigned + Clone + Copy;
     }
 
     #[pallet::event]
     #[pallet::generate_deposit(pub (super) fn deposit_event)]
     pub enum Event<T: Config> {
-        SomethingHappened(),
+        SwapExecuted,
     }
 
     #[pallet::error]
     pub enum Error<T> {
-        None,
+        SwapFailed,
     }
 
     #[pallet::genesis_config]
@@ -60,8 +68,27 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub(super) fn something(_origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        pub(super) fn execute_swap(_origin: OriginFor<T>) -> DispatchResultWithPostInfo {
             Ok(().into())
+        }
+    }
+
+    impl<T: Config> PathFinder<T> for Pallet<T> {
+
+        fn find_path(&mut self,
+                     from_token: T::CurrencyId,
+                     to_token: T::CurrencyId,
+                     amount: T::Balance,
+                     slippage: FixedU128) -> Path<T::CurrencyId, T::Balance>
+        {
+            // Dummy algorithm, TODO
+            let dexs = DEXs::<T>::get();
+            let mut paths = vec![];
+            for dex in dexs {
+                let target = dex.get_quote(&from_token, &to_token, amount);
+                paths.push((from_token.clone(), to_token.clone(), amount.clone(), target));
+            }
+            paths
         }
     }
 }
