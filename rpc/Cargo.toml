@@ -1,0 +1,15 @@
+[package]
+name = "pallet-dex-aggregator-rpc"
+version = "0.1.0"
+authors = ["Andy Bell <andyjsbell@gmail.com>"]
+edition = "2018"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2.0.0" }
+jsonrpc-core = "15.1.0"
+jsonrpc-core-client = "15.1.0"
+jsonrpc-derive = "15.1.0"
+pallet-dex-aggregator-rpc-runtime-api = { version = "0.1.0", path = "./runtime-api" }
