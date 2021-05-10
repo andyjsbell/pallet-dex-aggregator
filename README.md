@@ -98,3 +98,4 @@ in less than 5 seconds.
 
 The commission is in place to protect against spam and to incentivise nodes running the network.
 Alternatively the swap could be paid with a token native to the blockchain instead of a commission of the original token.
+
