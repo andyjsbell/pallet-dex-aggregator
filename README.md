@@ -47,6 +47,7 @@ struct Params {
 trait Config  {
     type CurrencyId;
     type Balance;
+    /// An approximation of costs in terms of commision and also any downstream costs
     type Costs;
 }
 
@@ -80,14 +81,20 @@ trait DEX<T: Config> {
 }
 ```
 
-On accepting a swap request the pallet would send the `SwapAccepted(from_token, to_token, amount)` event.  If the swap,
-when it is processed, is executed then the event `SwapExecuted(from_token, to_token, amount, target_amount)` and if it fails due to
-parameters set on the swap then the event `SwapFailed(from_token, to_token, amount)`
+Without encrypting the mempool and extrinsic calls front-running is a danger so we have to be prevent exposing the 
+intended trade until we wish to execute the trade.
 
-The amount to be swapped would be transferred to the pallet and held by the pallet until either the swap is executed or
-if the swap fails. For a successful swap the target token would be transferred to the swap caller.  For a failure the 
-original swap token would be returned to the caller.  In order to protect against spam and to incentivise nodes a commission
-would be charged at 0.3% of the original token for a successful swap or 0.03% for a swap that failed.
+A proposed strategy would be:
+- User sends an RPC request of their desired swap and the node runs the pathfinder algorithm returning the best path 
+in less than 5 seconds.  
+- The path is cached at the node for later retrieval. The path details plus a `quote_identifier` for this operation are returned to the caller.
+- The user decides to execute the swap and calls the `swap` extrinsic with the `quote_identifier` and the source funds.
+- The `quote_identifier` is pushed to pallet storage for execution in the next block.
+- On the next block the OCW will process the `quote_identifier` by retrieving the path from the RPC search in the first step
+- The OCW will call the `swap` extrinsic with the path details for execution
+- On successful execution of the swap the callers account would be credited minus commission at X% rate
+- On failure due to slippage or other constraints on the trade then the funds would be returned to the caller minus commission at X% rate
+- On error any funds transferred by the caller would be sent back.
 
+The commission is in place to protect against spam and to incentivise nodes running the network.
 Alternatively the swap could be paid with a token native to the blockchain instead of a commission of the original token.
-
