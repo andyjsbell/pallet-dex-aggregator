@@ -62,14 +62,20 @@ pub struct DEXs<T: Config> {
     _marker: PhantomData<T>,
 }
 
-type CurrencyId = u64;
+// Our tokens
+type CurrencyId = u32;
 const TOKEN_1: CurrencyId = 1;
 const TOKEN_2: CurrencyId = 2;
 const TOKEN_3: CurrencyId = 3;
 const TOKEN_4: CurrencyId = 4;
 const TOKEN_5: CurrencyId = 5;
 
+// Create two DEX (A and B).
+// We can't trade TOKEN_1 for TOKEN_5 without going via TOKEN_2 which can be bought
+// on DEX_A and then exchanged for TOKEN_5 on DEX_B
 struct DEX_A;
+struct DEX_B;
+
 impl<T:Config> Dex<T> for DEX_A {
     fn get_quote(
         &self,
@@ -80,12 +86,13 @@ impl<T:Config> Dex<T> for DEX_A {
     }
 
     fn trading_pairs(&self) -> Vec<(T::CurrencyId, T::CurrencyId)> {
-        vec![(TOKEN_1, TOKEN_2), (TOKEN_1, TOKEN_3)]
+        vec![
+            (TOKEN_1.into(), TOKEN_2.into()),
+            (TOKEN_1.into(), TOKEN_3.into()),
+            (TOKEN_1.into(), TOKEN_4.into()),
+        ]
     }
-
 }
-
-struct DEX_B;
 
 impl<T:Config> Dex<T> for DEX_B {
     fn get_quote(
@@ -97,7 +104,7 @@ impl<T:Config> Dex<T> for DEX_B {
     }
 
     fn trading_pairs(&self) -> Vec<(T::CurrencyId, T::CurrencyId)> {
-        vec![(TOKEN_1, TOKEN_2), (TOKEN_1, TOKEN_4)]
+        vec![(TOKEN_2.into(), TOKEN_5.into())]
     }
 }
 

@@ -2,7 +2,7 @@
 
 mod mock;
 mod tests;
-mod traits;
+pub mod traits;
 
 pub use pallet::*;
 use sp_runtime::FixedU128;
@@ -40,26 +40,24 @@ pub mod pallet {
 
     #[pallet::error]
     pub enum Error<T> {
+        InvalidSwap,
         SwapFailed,
     }
 
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
-        pub c: T::BlockNumber,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            GenesisConfig { c: Zero::zero() }
+            GenesisConfig { }
         }
     }
 
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
-        fn build(&self) {
-
-        }
+        fn build(&self) {}
     }
 
     #[pallet::hooks]
@@ -68,7 +66,13 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-        pub(super) fn execute_swap(_origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        pub(super) fn execute_swap(origin: OriginFor<T>, path: Path<T::CurrencyId, T::Balance>) -> DispatchResultWithPostInfo {
+            let who = ensure_signed(origin)?;
+            // Run through path and make swaps
+            // Confirm we have the source amount token
+            // Iterate along path to make the swaps
+            // This would need to be atomic and would rollback on any failure during the swap
+            // If we hit slippage fail and rollback
             Ok(().into())
         }
     }
@@ -81,14 +85,15 @@ pub mod pallet {
                      amount: T::Balance,
                      slippage: FixedU128) -> Path<T::CurrencyId, T::Balance>
         {
-            // Dummy algorithm, TODO
+            // Dummy algorithm, just gets quotes and returns them
+            // Would need to then build a path with these TODO
             let dexs = DEXs::<T>::get();
             let mut paths = vec![];
             for dex in dexs {
                 let target = dex.get_quote(&from_token, &to_token, amount);
                 paths.push((from_token.clone(), to_token.clone(), amount.clone(), target));
             }
-            paths
+            (paths, slippage)
         }
     }
 }
