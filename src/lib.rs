@@ -28,8 +28,8 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
         type DEXs: SetOfDex<Self>;
-        type CurrencyId: AtLeast32BitUnsigned + Clone;
-        type Balance: AtLeast32BitUnsigned + Clone + Copy;
+        type CurrencyId: Parameter + AtLeast32BitUnsigned + Clone;
+        type Balance: Parameter + AtLeast32BitUnsigned + Clone + Copy;
     }
 
     #[pallet::event]
@@ -45,18 +45,18 @@ pub mod pallet {
     }
 
     #[pallet::genesis_config]
-    pub struct GenesisConfig<T: Config> {
+    pub struct GenesisConfig {
     }
 
     #[cfg(feature = "std")]
-    impl<T: Config> Default for GenesisConfig<T> {
+    impl Default for GenesisConfig {
         fn default() -> Self {
             GenesisConfig { }
         }
     }
 
     #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+    impl<T: Config> GenesisBuild<T> for GenesisConfig {
         fn build(&self) {}
     }
 
